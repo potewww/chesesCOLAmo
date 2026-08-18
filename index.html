@@ -6,7 +6,7 @@
 <title>Cola Lab — Classifica</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<script src="https://mdcwynozeugxxmcrgwra.supabase.co/rest/v1/"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --coal: #170d07;
@@ -182,27 +182,223 @@
     color:var(--cream-dim);
     opacity:0.6;
   }
+
+  /* ---- Sezione inserimento ---- */
+  .add-section{margin-top:56px;}
+  .add-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .add-sub{
+    color:var(--cream-dim);
+    font-size:14px;
+    margin:0 0 24px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .tab-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    background:var(--surface);
+    color:var(--cream-dim);
+    border:1px solid rgba(242,232,213,0.1);
+    border-radius:999px;
+    padding:9px 18px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+  }
+  .tab-btn.active{
+    background:var(--copper);
+    color:var(--coal);
+    border-color:var(--copper);
+    font-weight:700;
+  }
+
+  .form-panel{
+    display:none;
+    background:var(--surface);
+    border:1px solid rgba(242,232,213,0.08);
+    border-radius:var(--radius);
+    padding:28px;
+  }
+  .form-panel.active{display:block;}
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.full{grid-column:1 / -1;}
+  .field label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--copper-bright);
+  }
+  .field input, .field select, .field textarea{
+    background:var(--coal);
+    border:1px solid rgba(242,232,213,0.14);
+    border-radius:6px;
+    padding:11px 12px;
+    color:var(--cream);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--fizz);
+  }
+  .field textarea{resize:vertical;min-height:60px;font-family:'Inter', sans-serif;}
+
+  .half-votes-hint{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--cream-dim);
+    margin-top:4px;
+  }
+
+  .submit-btn{
+    margin-top:22px;
+    background:var(--fizz);
+    color:var(--coal);
+    border:none;
+    border-radius:8px;
+    padding:13px 26px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform 0.1s ease, box-shadow 0.15s ease;
+  }
+  .submit-btn:hover{box-shadow:0 4px 16px rgba(212,225,87,0.25);}
+  .submit-btn:active{transform:scale(0.98);}
+  .submit-btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .form-msg{
+    margin-top:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+  }
+  .form-msg.ok{color:var(--fizz);}
+  .form-msg.err{color:var(--rust);}
+
+  @media (max-width:640px){
+    .field-grid{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="eyebrow">Registro di degustazione &middot; 4 assaggiatori</div>
-      <h1>cheses<span>COLA</span>amo</h1>
+      <h1>cheses<span>COLA</span>mo</h1>
       <p class="lede">Ogni bottiglia comprata, assaggiata e votata su gusto, retrogusto e frizzantezza. Il punteggio finale è una media pesata tra tutti gli assaggiatori.</p>
     </header>
 
     <div class="board" id="board">
       <div class="loading">Caricamento classifica&hellip;</div>
     </div>
+
+    <section class="add-section">
+      <h2 class="add-title">Aggiungi</h2>
+      <p class="add-sub">Registra una nuova cola comprata, oppure una degustazione (anche di una cola già presente).</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('cola')" id="tab-btn-cola">Nuova cola</button>
+        <button class="tab-btn" onclick="switchTab('rating')" id="tab-btn-rating">Nuova degustazione</button>
+      </div>
+
+      <!-- FORM: nuova cola -->
+      <form class="form-panel active" id="form-panel-cola">
+        <div class="field-grid">
+          <div class="field full">
+            <label for="c-name">Nome cola</label>
+            <input id="c-name" type="text" required placeholder="es. Cola Zero Marca X">
+          </div>
+          <div class="field">
+            <label for="c-brand">Marca</label>
+            <input id="c-brand" type="text" placeholder="facoltativo">
+          </div>
+          <div class="field">
+            <label for="c-price">Prezzo (&euro;)</label>
+            <input id="c-price" type="number" step="0.01" min="0" required placeholder="1.50">
+          </div>
+          <div class="field">
+            <label for="c-date">Data d'acquisto</label>
+            <input id="c-date" type="date" required>
+          </div>
+          <div class="field">
+            <label for="c-image">URL immagine</label>
+            <input id="c-image" type="url" placeholder="facoltativo">
+          </div>
+          <div class="field full">
+            <label for="c-notes">Note</label>
+            <textarea id="c-notes" placeholder="facoltativo"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">Aggiungi cola</button>
+        <div class="form-msg" id="c-msg"></div>
+      </form>
+
+      <!-- FORM: nuova degustazione -->
+      <form class="form-panel" id="form-panel-rating">
+        <div class="field-grid">
+          <div class="field">
+            <label for="r-person">Chi assaggia</label>
+            <select id="r-person" required></select>
+          </div>
+          <div class="field">
+            <label for="r-cola">Quale cola</label>
+            <select id="r-cola" required></select>
+          </div>
+          <div class="field">
+            <label for="r-date">Data degustazione</label>
+            <input id="r-date" type="date" required>
+          </div>
+          <div class="field">
+            <label for="r-price">Prezzo pagato (&euro;)</label>
+            <input id="r-price" type="number" step="0.01" min="0" placeholder="lascia vuoto se invariato">
+          </div>
+          <div class="field">
+            <label for="r-taste">Gusto (1&ndash;10)</label>
+            <input id="r-taste" type="number" step="0.5" min="1" max="10" required placeholder="7.5">
+          </div>
+          <div class="field">
+            <label for="r-aftertaste">Retrogusto (1&ndash;10)</label>
+            <input id="r-aftertaste" type="number" step="0.5" min="1" max="10" required placeholder="6.5">
+          </div>
+          <div class="field">
+            <label for="r-fizziness">Frizzantezza (1&ndash;10)</label>
+            <input id="r-fizziness" type="number" step="0.5" min="1" max="10" required placeholder="8">
+          </div>
+          <div class="field full">
+            <label for="r-comment">Commento</label>
+            <textarea id="r-comment" placeholder="facoltativo"></textarea>
+          </div>
+        </div>
+        <p class="half-votes-hint">I voti accettano solo mezzi punti (es. 7, 7.5, 8&hellip;).</p>
+        <button type="submit" class="submit-btn">Aggiungi degustazione</button>
+        <div class="form-msg" id="r-msg"></div>
+      </form>
+    </section>
   </div>
 
   <footer class="wrap">Pesi: gusto 50% &middot; retrogusto 30% &middot; frizzantezza 20%</footer>
 
 <script>
   // ---- CONFIGURAZIONE: inserisci qui i dati del tuo progetto Supabase ----
-  const SUPABASE_URL = 'https://TUO-PROGETTO.supabase.co';
-  const SUPABASE_ANON_KEY = 'TUA-CHIAVE-ANON-PUBBLICA';
+  const SUPABASE_URL = 'https://mdcwynozeugxxmcrgwra.supabase.co/rest/v1/';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kY3d5bm96ZXVneHhtY3Jnd3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNDQ1NjMsImV4cCI6MjEwMjYyMDU2M30.fDi8gk9GWYsqMep4fnxJeF33SzFMIdgO78HKrS2a-5c';
   // --------------------------------------------------------------------
 
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -255,7 +451,7 @@
           <div class="rank">${idx + 1}</div>
           <div class="info">
             <div class="name">${c.name}${c.brand ? ` <span style="color:var(--cream-dim);font-weight:400;font-size:15px;">— ${c.brand}</span>` : ''}</div>
-            <div class="meta">&euro;${Number(c.price).toFixed(2)} &middot; comprata il ${new Date(c.purchase_date).toLocaleDateString('it-IT')} &middot; ${c.num_voti} voti</div>
+            <div class="meta">&euro;${Number(c.latest_price).toFixed(2)} &middot; comprata il ${new Date(c.initial_purchase_date).toLocaleDateString('it-IT')} &middot; ${c.num_voti} voti</div>
           </div>
           <div class="score-num">${c.overall_score ?? '—'}<br><small>/ 10</small></div>
           ${bubbleMeter(c.overall_score ?? 0)}
@@ -273,6 +469,103 @@
   }
 
   loadBoard();
+
+  // ---- Sezione "Aggiungi" ----
+
+  function switchTab(which){
+    document.getElementById('tab-btn-cola').classList.toggle('active', which === 'cola');
+    document.getElementById('tab-btn-rating').classList.toggle('active', which === 'rating');
+    document.getElementById('form-panel-cola').classList.toggle('active', which === 'cola');
+    document.getElementById('form-panel-rating').classList.toggle('active', which === 'rating');
+  }
+  window.switchTab = switchTab;
+
+  // riempie le due select del form "nuova degustazione" con persone e cole esistenti
+  async function loadFormOptions(){
+    const personSelect = document.getElementById('r-person');
+    const colaSelect = document.getElementById('r-cola');
+
+    const { data: people } = await supabase.from('people').select('id, name').order('name');
+    personSelect.innerHTML = (people || [])
+      .map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+    const { data: colas } = await supabase.from('colas').select('id, name, brand').order('name');
+    colaSelect.innerHTML = (colas || [])
+      .map(c => `<option value="${c.id}">${c.name}${c.brand ? ' — ' + c.brand : ''}</option>`).join('');
+  }
+  loadFormOptions();
+
+  // default: oggi, in entrambi i form
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('c-date').value = today;
+  document.getElementById('r-date').value = today;
+
+  function showMsg(el, text, ok){
+    el.textContent = text;
+    el.className = 'form-msg ' + (ok ? 'ok' : 'err');
+  }
+
+  // ---- submit: nuova cola ----
+  document.getElementById('form-panel-cola').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('.submit-btn');
+    const msg = document.getElementById('c-msg');
+    btn.disabled = true;
+
+    const payload = {
+      name: document.getElementById('c-name').value.trim(),
+      brand: document.getElementById('c-brand').value.trim() || null,
+      price: parseFloat(document.getElementById('c-price').value),
+      purchase_date: document.getElementById('c-date').value,
+      image_url: document.getElementById('c-image').value.trim() || null,
+      notes: document.getElementById('c-notes').value.trim() || null,
+    };
+
+    const { error } = await supabase.from('colas').insert(payload);
+    btn.disabled = false;
+
+    if (error) {
+      showMsg(msg, 'Errore: ' + error.message, false);
+      return;
+    }
+    showMsg(msg, 'Cola aggiunta.', true);
+    e.target.reset();
+    document.getElementById('c-date').value = today;
+    loadFormOptions();
+    loadBoard();
+  });
+
+  // ---- submit: nuova degustazione ----
+  document.getElementById('form-panel-rating').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('.submit-btn');
+    const msg = document.getElementById('r-msg');
+    btn.disabled = true;
+
+    const priceVal = document.getElementById('r-price').value;
+    const payload = {
+      person_id: parseInt(document.getElementById('r-person').value, 10),
+      cola_id: parseInt(document.getElementById('r-cola').value, 10),
+      tasted_at: document.getElementById('r-date').value,
+      price: priceVal === '' ? null : parseFloat(priceVal),
+      taste: parseFloat(document.getElementById('r-taste').value),
+      aftertaste: parseFloat(document.getElementById('r-aftertaste').value),
+      fizziness: parseFloat(document.getElementById('r-fizziness').value),
+      comment: document.getElementById('r-comment').value.trim() || null,
+    };
+
+    const { error } = await supabase.from('ratings').insert(payload);
+    btn.disabled = false;
+
+    if (error) {
+      showMsg(msg, 'Errore: ' + error.message, false);
+      return;
+    }
+    showMsg(msg, 'Degustazione registrata.', true);
+    e.target.reset();
+    document.getElementById('r-date').value = today;
+    loadBoard();
+  });
 </script>
 </body>
 </html>
