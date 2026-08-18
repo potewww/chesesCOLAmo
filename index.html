@@ -329,21 +329,11 @@
             <label for="c-brand">Marca</label>
             <input id="c-brand" type="text" placeholder="facoltativo">
           </div>
-          <div class="field">
-            <label for="c-price">Prezzo (&euro;)</label>
-            <input id="c-price" type="number" step="0.01" min="0" required placeholder="1.50">
-          </div>
-          <div class="field">
-            <label for="c-date">Data d'acquisto</label>
-            <input id="c-date" type="date" required>
-          </div>
-          <div class="field">
-            <label for="c-image">URL immagine</label>
-            <input id="c-image" type="url" placeholder="facoltativo">
-          </div>
-          <div class="field full">
-            <label for="c-notes">Note</label>
-            <textarea id="c-notes" placeholder="facoltativo"></textarea>
+          <div class="field" style="justify-content:flex-end;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input id="c-is-zero" type="checkbox" style="width:16px;height:16px;accent-color:var(--fizz);">
+              È una versione zero / senza zucchero
+            </label>
           </div>
         </div>
         <button type="submit" class="submit-btn">Aggiungi cola</button>
@@ -367,7 +357,7 @@
           </div>
           <div class="field">
             <label for="r-price">Prezzo pagato (&euro;)</label>
-            <input id="r-price" type="number" step="0.01" min="0" placeholder="lascia vuoto se invariato">
+            <input id="r-price" type="number" step="0.01" min="0" required placeholder="1.50">
           </div>
           <div class="field">
             <label for="r-taste">Gusto (1&ndash;10)</label>
@@ -450,8 +440,8 @@
         <div class="row" onclick="document.getElementById('d-${c.id}').classList.toggle('open')">
           <div class="rank">${idx + 1}</div>
           <div class="info">
-            <div class="name">${c.name}${c.brand ? ` <span style="color:var(--cream-dim);font-weight:400;font-size:15px;">— ${c.brand}</span>` : ''}</div>
-            <div class="meta">&euro;${Number(c.latest_price).toFixed(2)} &middot; comprata il ${new Date(c.initial_purchase_date).toLocaleDateString('it-IT')} &middot; ${c.num_voti} voti</div>
+            <div class="name">${c.name}${c.brand ? ` <span style="color:var(--cream-dim);font-weight:400;font-size:15px;">— ${c.brand}</span>` : ''}${c.is_zero ? ' <span style="color:var(--fizz);font-family:\'JetBrains Mono\',monospace;font-size:11px;border:1px solid var(--fizz);border-radius:4px;padding:1px 6px;vertical-align:middle;">ZERO</span>' : ''}</div>
+            <div class="meta">${c.latest_price != null ? '&euro;' + Number(c.latest_price).toFixed(2) + ' &middot; ' : ''}${c.first_tasted_at ? 'prima provata il ' + new Date(c.first_tasted_at).toLocaleDateString('it-IT') + ' &middot; ' : ''}${c.num_voti} voti</div>
           </div>
           <div class="score-num">${c.overall_score ?? '—'}<br><small>/ 10</small></div>
           ${bubbleMeter(c.overall_score ?? 0)}
@@ -495,9 +485,8 @@
   }
   loadFormOptions();
 
-  // default: oggi, in entrambi i form
+  // default: oggi, per la data della degustazione
   const today = new Date().toISOString().slice(0, 10);
-  document.getElementById('c-date').value = today;
   document.getElementById('r-date').value = today;
 
   function showMsg(el, text, ok){
@@ -515,10 +504,7 @@
     const payload = {
       name: document.getElementById('c-name').value.trim(),
       brand: document.getElementById('c-brand').value.trim() || null,
-      price: parseFloat(document.getElementById('c-price').value),
-      purchase_date: document.getElementById('c-date').value,
-      image_url: document.getElementById('c-image').value.trim() || null,
-      notes: document.getElementById('c-notes').value.trim() || null,
+      is_zero: document.getElementById('c-is-zero').checked,
     };
 
     const { error } = await supabaseClient.from('colas').insert(payload);
@@ -530,7 +516,6 @@
     }
     showMsg(msg, 'Cola aggiunta.', true);
     e.target.reset();
-    document.getElementById('c-date').value = today;
     loadFormOptions();
     loadBoard();
   });
@@ -542,12 +527,11 @@
     const msg = document.getElementById('r-msg');
     btn.disabled = true;
 
-    const priceVal = document.getElementById('r-price').value;
     const payload = {
       person_id: parseInt(document.getElementById('r-person').value, 10),
       cola_id: parseInt(document.getElementById('r-cola').value, 10),
       tasted_at: document.getElementById('r-date').value,
-      price: priceVal === '' ? null : parseFloat(priceVal),
+      price: parseFloat(document.getElementById('r-price').value),
       taste: parseFloat(document.getElementById('r-taste').value),
       aftertaste: parseFloat(document.getElementById('r-aftertaste').value),
       fizziness: parseFloat(document.getElementById('r-fizziness').value),
