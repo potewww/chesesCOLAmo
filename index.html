@@ -301,7 +301,7 @@
   <div class="wrap">
     <header>
       <div class="eyebrow">Registro di degustazione &middot; 4 assaggiatori</div>
-      <h1>cheses<span>COLA</span>mo</h1>
+      <h1>Cola <span>Lab</span></h1>
       <p class="lede">Ogni bottiglia comprata, assaggiata e votata su gusto, retrogusto e frizzantezza. Il punteggio finale è una media pesata tra tutti gli assaggiatori.</p>
     </header>
 
@@ -397,11 +397,11 @@
 
 <script>
   // ---- CONFIGURAZIONE: inserisci qui i dati del tuo progetto Supabase ----
-  const SUPABASE_URL = 'https://mdcwynozeugxxmcrgwra.supabase.co/rest/v1/';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1kY3d5bm96ZXVneHhtY3Jnd3JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNDQ1NjMsImV4cCI6MjEwMjYyMDU2M30.fDi8gk9GWYsqMep4fnxJeF33SzFMIdgO78HKrS2a-5c';
+  const SUPABASE_URL = 'https://TUO-PROGETTO.supabase.co';
+  const SUPABASE_ANON_KEY = 'TUA-CHIAVE-ANON-PUBBLICA';
   // --------------------------------------------------------------------
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const board = document.getElementById('board');
 
   function bubbleMeter(score){
@@ -415,7 +415,7 @@
   }
 
   async function loadBoard(){
-    const { data: overall, error } = await supabase
+    const { data: overall, error } = await supabaseClient
       .from('cola_overall')
       .select('*')
       .order('overall_score', { ascending: false, nullsFirst: false });
@@ -429,7 +429,7 @@
       return;
     }
 
-    const { data: details } = await supabase
+    const { data: details } = await supabaseClient
       .from('cola_ratings_detail')
       .select('*');
 
@@ -485,11 +485,11 @@
     const personSelect = document.getElementById('r-person');
     const colaSelect = document.getElementById('r-cola');
 
-    const { data: people } = await supabase.from('people').select('id, name').order('name');
+    const { data: people } = await supabaseClient.from('people').select('id, name').order('name');
     personSelect.innerHTML = (people || [])
       .map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
-    const { data: colas } = await supabase.from('colas').select('id, name, brand').order('name');
+    const { data: colas } = await supabaseClient.from('colas').select('id, name, brand').order('name');
     colaSelect.innerHTML = (colas || [])
       .map(c => `<option value="${c.id}">${c.name}${c.brand ? ' — ' + c.brand : ''}</option>`).join('');
   }
@@ -521,7 +521,7 @@
       notes: document.getElementById('c-notes').value.trim() || null,
     };
 
-    const { error } = await supabase.from('colas').insert(payload);
+    const { error } = await supabaseClient.from('colas').insert(payload);
     btn.disabled = false;
 
     if (error) {
@@ -554,7 +554,7 @@
       comment: document.getElementById('r-comment').value.trim() || null,
     };
 
-    const { error } = await supabase.from('ratings').insert(payload);
+    const { error } = await supabaseClient.from('ratings').insert(payload);
     btn.disabled = false;
 
     if (error) {
